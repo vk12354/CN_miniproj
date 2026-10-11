@@ -1,0 +1,6 @@
+# Put one hostname/domain per line.
+# Exact hosts and subdomains are blocked.
+# Example:
+# example.com
+# blocked.test
+blocked.test
