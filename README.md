@@ -1,154 +1,106 @@
-# CN_miniproj
 # Designing a Proxy Server
-### Computer Networks Mini Project
 
-1. Project Overview
+A beginner-friendly C forward HTTP proxy for a Computer Networks mini-project.
 
-A proxy server acts as an intermediary between a client and a destination server. It receives requests from clients, processes them according to predefined rules, forwards permitted requests to the destination, and returns the responses to the clients.
+## Features
 
-This project implements a **forward HTTP proxy server using C**. It demonstrates important networking concepts such as TCP socket programming, concurrent client handling, HTTP request processing, response caching, access control, and traffic logging.
+- Concurrent client handling using pthreads
+- Real HTTP request parsing
+- HTTP request forwarding
+- Domain/URL access control
+- File-based response cache with 60-second TTL
+- Thread-safe logging
+- Graceful error handling and socket timeouts
+- Performance measurement
 
-The proxy is designed to improve request handling, control access to selected domains, and provide useful information about network traffic.
+## Requirements
 
- 2. Why We Chose This Project
+Linux/Ubuntu/WSL2 with:
 
-We chose the Proxy Server project to gain practical knowledge of how communication between clients and web servers works in real-world networks. Rather than studying networking concepts only in theory, this project allows us to implement them using C and TCP sockets.
+```bash
+sudo apt update
+sudo apt install gcc make git curl python3
+```
 
-The project also gives us an opportunity to work with HTTP protocols, multithreading, caching mechanisms, and access-control techniques. Its combination of networking fundamentals and practical software development makes it a valuable project for understanding how network intermediaries operate.
+## Build
 
- 3. Importance of the Project
+```bash
+make clean
+make
+```
 
-Proxy servers are widely used in networks for traffic management, access control, performance optimization, and monitoring.
+## Run
 
-The main importance of this project includes:
+```bash
+./proxy_server 8080
+```
 
-- **Performance optimization:** Caching eligible responses can reduce repeated requests to destination servers and improve response times.
-- **Access control:** A configurable blocklist allows the proxy to restrict access to selected domains.
-- **Concurrent communication:** Multithreading enables the server to handle multiple clients without making each client wait for the previous request to finish.
-- **Traffic monitoring:** Logging helps administrators understand requests, response statuses, cache activity, and errors.
-- **Network reliability:** Error handling and connection timeouts help the proxy respond appropriately when requests are invalid or destination servers are unavailable.
+Default port is 8080.
 
-Through this project, we gain practical experience in building a network application that combines communication, performance, control, and reliability.
+## Test
 
- 4. Key Features
+Automated test suite:
 
-- TCP-based forward proxy implemented in C.
-- HTTP request parsing and forwarding.
-- Concurrent client handling using POSIX threads (`pthreads`).
-- Domain-based access control using a configurable blocklist.
-- Response caching with a time-to-live (TTL) policy.
-- Cache HIT and MISS detection.
-- Traffic logging for request and response analysis.
-- Error handling for malformed requests and unreachable destinations.
-- Performance comparison between direct and proxied requests.
+```bash
+make test
+```
 
-**Protocol scope:** The implementation focuses on HTTP GET requests and does not perform HTTPS traffic decryption.
+Manual request through proxy:
 
- 5. Technologies Used
+```bash
+NO_PROXY= HTTP_PROXY= HTTPS_PROXY= ALL_PROXY= \
+curl -v -x http://127.0.0.1:8080 http://127.0.0.1:18080/
+```
 
-| Technology | Purpose |
-|---|---|
-| C | Core implementation |
-| POSIX TCP sockets | Client and server communication |
-| pthreads | Concurrent client handling |
-| GCC | Compilation |
-| Makefile | Build automation |
-| curl | Sending HTTP requests and testing |
-| Git and GitHub | Version control and collaboration |
-| Linux / Ubuntu | Development and execution environment |
+For a local destination server:
 
- 6. Team Members and Responsibilities
+```bash
+python3 -m http.server 18080
+```
 
-The project is divided among four members, with each member responsible for a distinct component of the system.
+## Cache demonstration
 
-# 1. Vivek Raj — Networking and Concurrency
+Request the same URL twice. The first request should be a `MISS`; the next valid request should be a `HIT`.
 
-- Implementing the TCP server and socket management.
-- Handling client connections using `socket()`, `bind()`, `listen()`, and `accept()`.
-- Implementing concurrent client handling using `pthreads`.
-- Managing connection cleanup and supporting integration with the other modules.
+Inspect:
 
-# 2. Rajat Jha — HTTP Parsing and Request Forwarding
+```bash
+tail -f logs/proxy.log
+```
 
-- Implementing HTTP request parsing and validation.
-- Extracting request methods, destination hosts, ports, and paths.
-- Establishing connections to destination servers.
-- Forwarding HTTP requests and relaying responses to clients.
-- Handling protocol-related errors and invalid requests.
+## Access control demonstration
 
-# 3. Hrishika Biswas — Caching and Access Control
+Edit:
 
-- Implementing the response caching mechanism.
-- Managing cache entries, TTL, and cache HIT/MISS decisions.
-- Developing the configurable domain blocklist.
-- Implementing access-control checks and blocked-request responses.
-- Ensuring safe access to shared cache resources during concurrent requests.
+`config/blocklist.txt`
 
-# 4. Sanchali Ray — Logging, Testing, and Documentation
+Add a domain, restart the proxy, and request that domain through the proxy. The proxy should return `403 Forbidden` and log `BLOCKED`.
 
-- Implementing and integrating traffic logging.
-- Testing normal forwarding, caching, access control, and error handling.
-- Testing the proxy with multiple simultaneous clients.
-- Measuring and documenting latency and throughput.
-- Preparing the README, design documentation, testing instructions, and live demonstration procedure.
+## Performance
 
-All four members contribute to integration, debugging, verification, and preparation for the final project demonstration. Each member is also expected to understand the overall architecture and the major design decisions.
+```bash
+bash tests/performance.sh
+```
 
-7. General Working Flow
-          Client / Browser
-                 |
-                 v
-          Proxy Server
-                 |
-                 v
-        Parse HTTP Request
-                 |
-                 v
-        Validate the Request
-                 |
-                 v
-         Access-Control Check
-            /          \
-        Blocked        Allowed
-           |              |
-           v              v
-       Return 403     Check Cache
-                      /         \
-                    HIT         MISS
-                     |            |
-                     v            v
-                 Return       Contact
-                 Cached       Destination
-                 Response     Server
-                                  |
-                                  v
-                           Receive Response
-                                  |
-                                  v
-                           Cache if Eligible
-                                  |
-                                  v
-                           Return to Client
+The script compares a direct request with proxy MISS and proxy HIT timings.
 
+## Project structure
 
-Traffic events, cache activity, and errors are logged throughout the request-processing lifecycle.
+```text
+src/       C implementation
+include/   shared constants
+config/    access-control configuration
+cache/     generated cache files
+logs/      generated log files
+tests/     automated/manual test helpers
+docs/      architecture, testing, performance, demo and viva notes
+```
 
-8. Expected Outcomes
+## Team contributions
 
-By completing this project, we aim to demonstrate:
+- Member 1 — Networking & concurrency
+- Member 2 — HTTP parsing & forwarding
+- Member 3 — Caching & access control
+- Member 4 — Logging, testing, performance & documentation
 
-- Successful HTTP request forwarding through a proxy.
-- Concurrent handling of multiple client connections.
-- Correct blocking of configured domains.
-- Cache HIT, MISS, and expiration behavior.
-- Graceful handling of invalid requests and connection failures.
-- Useful traffic logs.
-- Measured performance differences between direct connections and proxied requests.
-9. Conclusion
-
-The Proxy Server mini-project provides practical insight into the operation of application-layer network services. It combines TCP communication, HTTP processing, concurrency, caching, access control, and performance analysis in a single system.
-
-Working collaboratively on this project helps us strengthen our C programming skills, understand computer networking concepts, and gain experience in modular software development, testing, debugging, and version control.
-
-The project demonstrates how a relatively simple intermediary can be extended to provide useful network-management capabilities while highlighting the trade-offs between functionality, performance, and reliability.
-
+Replace these role labels with your team's actual names.
